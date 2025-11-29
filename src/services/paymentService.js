@@ -20,8 +20,8 @@ class PaymentService {
     const isLocal = process.env.NODE_ENV !== "production";
 
     const FRONT_URL = isLocal
-      ? "https://front-ecommerce-bay.vercel.app"
-      : "https://seusite.com";
+      ? "https://front-ecommerce-bay.vercel.app/"
+      : "https://front-ecommerce-bay.vercel.app/";
 
     const WEBHOOK_URL =
       "https://back-ecommerce-7cp3.onrender.com/api/payment/webhook";
