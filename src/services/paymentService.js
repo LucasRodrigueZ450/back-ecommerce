@@ -20,11 +20,11 @@ class PaymentService {
     const isLocal = process.env.NODE_ENV !== "production";
 
     const FRONT_URL = isLocal
-      ? "https://fluttery-accusatorially-jamika.ngrok-free.dev"
+      ? "front-ecommerce-poawokmw4-lucas-rodrigues-projects-8582cc8a.vercel.app"
       : "https://seusite.com";
 
     const WEBHOOK_URL =
-      "https://stacee-unprating-tackily.ngrok-free.dev/api/payment/webhook";
+      "https://back-ecommerce-7cp3.onrender.com/api/payment/webhook";
 
     const subtotal = items.reduce(
       (sum, item) => sum + Number(item.price) * Number(item.quantity),
