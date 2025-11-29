@@ -1,0 +1,124 @@
+// src/services/paymentService.js
+import { MercadoPagoConfig, Preference, Payment } from "mercadopago";
+import { MP_ACCESS_TOKEN } from "../config/env.js";
+import Order from "../models/order.js";
+
+class PaymentService {
+  constructor() {
+    this.client = new MercadoPagoConfig({
+      accessToken: MP_ACCESS_TOKEN,
+    });
+
+    this.preference = new Preference(this.client);
+    this.payment = new Payment(this.client);
+  }
+
+  async createPayment({ items, userId, payerEmail, shippingCost = 0 }) {
+    if (!userId) throw new Error("userId é obrigatório");
+    if (!items || !items.length) throw new Error("Carrinho vazio");
+
+    const isLocal = process.env.NODE_ENV !== "production";
+
+    const FRONT_URL = isLocal
+      ? "https://fluttery-accusatorially-jamika.ngrok-free.dev"
+      : "https://seusite.com";
+
+    const WEBHOOK_URL =
+      "https://stacee-unprating-tackily.ngrok-free.dev/api/payment/webhook";
+
+    const subtotal = items.reduce(
+      (sum, item) => sum + Number(item.price) * Number(item.quantity),
+      0
+    );
+
+    const total = subtotal + Number(shippingCost || 0);
+
+    // Criar pedido no banco
+    const order = await Order.create({
+      userId,
+      items: items.map((item) => ({
+        productId: item._id,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      total,
+      status: "pending",
+      paymentId: null,
+      preferenceId: null,
+      date: new Date(),
+    });
+
+    const preferenceBody = {
+      items: items.map((item) => ({
+        id: item._id,
+        title: item.name,
+        unit_price: Number(item.price),
+        quantity: Number(item.quantity),
+      })),
+
+      // payer: {
+      //   email: payerEmail || "teste@teste.com",
+      // },
+
+      back_urls: {
+        success: `${FRONT_URL}/payment-status/approved?orderId=${order._id}`,
+        failure: `${FRONT_URL}/payment-status/rejected?orderId=${order._id}`,
+        pending: `${FRONT_URL}/payment-status/pending?orderId=${order._id}`,
+      },
+
+      redirect_urls: {
+        success: `${FRONT_URL}/payment-status/approved?orderId=${order._id}`,
+        failure: `${FRONT_URL}/payment-status/rejected?orderId=${order._id}`,
+        pending: `${FRONT_URL}/payment-status/pending?orderId=${order._id}`,
+      },
+
+      // ⚠ auto_return REMOVIDO para não quebrar no localhost
+      external_reference: order._id.toString(),
+
+      notification_url: WEBHOOK_URL,
+    };
+
+    const response = await this.preference.create({ body: preferenceBody });
+
+    order.preferenceId = response.id;
+    await order.save();
+
+    return {
+      id: response.id,
+      init_point: response.init_point,
+      orderId: order._id,
+      total,
+    };
+  }
+
+  async handleWebhook(payload) {
+    console.log("📩 Webhook recebido:", JSON.stringify(payload, null, 2));
+
+    const { type, data } = payload;
+
+    if (type !== "payment") return;
+
+    const paymentId = data.id;
+    if (!paymentId) return;
+
+    const paymentResponse = await this.payment.get({ id: paymentId });
+    const mp = paymentResponse.body || paymentResponse;
+
+    const { status, external_reference } = mp;
+
+    console.log("💳 Pagamento:", { paymentId, status, external_reference });
+
+    const order = await Order.findByIdAndUpdate(
+      external_reference,
+      { status, paymentId },
+      { new: true }
+    );
+
+    if (order) {
+      console.log("✅ Pedido atualizado:", order._id);
+    }
+  }
+}
+
+export default new PaymentService();
