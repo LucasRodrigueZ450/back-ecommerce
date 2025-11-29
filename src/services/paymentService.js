@@ -20,7 +20,7 @@ class PaymentService {
     const isLocal = process.env.NODE_ENV !== "production";
 
     const FRONT_URL = isLocal
-      ? "front-ecommerce-poawokmw4-lucas-rodrigues-projects-8582cc8a.vercel.app"
+      ? "https://front-ecommerce-bay.vercel.app"
       : "https://seusite.com";
 
     const WEBHOOK_URL =
