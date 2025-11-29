@@ -17,12 +17,10 @@ class PaymentService {
     if (!userId) throw new Error("userId é obrigatório");
     if (!items || !items.length) throw new Error("Carrinho vazio");
 
-    const isLocal = process.env.NODE_ENV !== "production";
+    // URL real do front em produção (sem barra no fim!)
+    const FRONT_URL = "https://front-ecommerce-bay.vercel.app";
 
-    const FRONT_URL = isLocal
-      ? "https://front-ecommerce-bay.vercel.app/"
-      : "https://front-ecommerce-bay.vercel.app/";
-
+    // Webhook do backend (Render)
     const WEBHOOK_URL =
       "https://back-ecommerce-7cp3.onrender.com/api/payment/webhook";
 
@@ -57,25 +55,23 @@ class PaymentService {
         quantity: Number(item.quantity),
       })),
 
-      // payer: {
-      //   email: payerEmail || "teste@teste.com",
-      // },
-
+      // Rota única para qualquer status de pagamento
       back_urls: {
-        success: `${FRONT_URL}/payment-status/approved?orderId=${order._id}`,
-        failure: `${FRONT_URL}/payment-status/rejected?orderId=${order._id}`,
-        pending: `${FRONT_URL}/payment-status/pending?orderId=${order._id}`,
+        success: `${FRONT_URL}/payment-status?status=approved&orderId=${order._id}`,
+        failure: `${FRONT_URL}/payment-status?status=rejected&orderId=${order._id}`,
+        pending: `${FRONT_URL}/payment-status?status=pending&orderId=${order._id}`,
       },
 
       redirect_urls: {
-        success: `${FRONT_URL}/payment-status/approved?orderId=${order._id}`,
-        failure: `${FRONT_URL}/payment-status/rejected?orderId=${order._id}`,
-        pending: `${FRONT_URL}/payment-status/pending?orderId=${order._id}`,
+        success: `${FRONT_URL}/payment-status?status=approved&orderId=${order._id}`,
+        failure: `${FRONT_URL}/payment-status?status=rejected&orderId=${order._id}`,
+        pending: `${FRONT_URL}/payment-status?status=pending&orderId=${order._id}`,
       },
 
-      // ⚠ auto_return REMOVIDO para não quebrar no localhost
-      external_reference: order._id.toString(),
+      // Agora funciona tanto no Pix quanto no cartão
+      auto_return: "approved",
 
+      external_reference: order._id.toString(),
       notification_url: WEBHOOK_URL,
     };
 
