@@ -57,16 +57,16 @@ class PaymentService {
 
       // Rota única para qualquer status de pagamento
       back_urls: {
-        success: `${FRONT_URL}/payment-status?status=approved&orderId=${order._id}`,
-        failure: `${FRONT_URL}/payment-status?status=rejected&orderId=${order._id}`,
-        pending: `${FRONT_URL}/payment-status?status=pending&orderId=${order._id}`,
-      },
-
-      redirect_urls: {
-        success: `${FRONT_URL}/payment-status?status=approved&orderId=${order._id}`,
-        failure: `${FRONT_URL}/payment-status?status=rejected&orderId=${order._id}`,
-        pending: `${FRONT_URL}/payment-status?status=pending&orderId=${order._id}`,
-      },
+        success: `${FRONT_URL}/payment-status/approved?orderId=${order._id}`,
+        failure: `${FRONT_URL}/payment-status/rejected?orderId=${order._id}`,
+        pending: `${FRONT_URL}/payment-status/pending?orderId=${order._id}`,
+    },
+    
+    redirect_urls: {
+      success: `${FRONT_URL}/payment-status/approved?orderId=${order._id}`,
+      failure: `${FRONT_URL}/payment-status/rejected?orderId=${order._id}`,
+      pending: `${FRONT_URL}/payment-status/pending?orderId=${order._id}`,
+    },
 
       // Agora funciona tanto no Pix quanto no cartão
       auto_return: "approved",
